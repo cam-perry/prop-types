@@ -251,6 +251,42 @@ describe('PropTypesDevelopmentReact15', () => {
       typeCheckFailRequiredValues(PropTypes.string.isRequired);
     });
 
+    it('should warn for missing conditionally required values', () => {
+      typeCheckFailRequiredValues(PropTypes.string.isRequiredIf(() => true));
+      typeCheckFailRequiredValues(PropTypes.string.isRequiredIf(() => 'truthy'));
+      typeCheckFailRequiredValues(PropTypes.string.isRequiredIf(() => 42));
+      typeCheckFailRequiredValues(PropTypes.string.isRequiredIf(() => ({})));
+      typeCheckFailRequiredValues(PropTypes.string.isRequiredIf(() => []));
+    });
+
+    it('should not warn for empty values with conditionally required prop type', () => {
+      typeCheckPass(PropTypes.string.isRequiredIf(() => false), null)
+      typeCheckPass(PropTypes.string.isRequiredIf(() => null), null)
+      typeCheckPass(PropTypes.string.isRequiredIf(() => undefined), null)
+      typeCheckPass(PropTypes.string.isRequiredIf(() => ''), null)
+      typeCheckPass(PropTypes.string.isRequiredIf(() => 0), null)
+    })
+
+    it('should call custom requiredIf function with props', () => {
+      spyOn(console, 'error')
+      const propTypes = { 
+        foo: PropTypes.string.isRequiredIf(props => props.bar === 'baz'),
+        bar: PropTypes.string.isRequired
+      };
+      const props = { foo: null, bar: 'baz' };
+      PropTypes.checkPropTypes(
+        propTypes,
+        props,
+        'prop',
+        'testComponent',
+        null,
+      );
+      expect(console.error.calls.argsFor(0)[0]).toEqual(
+        "Warning: Failed prop type: The prop `foo` is marked as required in " +
+        "`testComponent`, but its value is `null`."
+      );
+    })
+
     it('should warn if called manually in development', () => {
       spyOn(console, 'error');
       expectWarningInDevelopment(PropTypes.array, /please/);

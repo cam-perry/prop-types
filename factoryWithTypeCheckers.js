@@ -218,6 +218,11 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 
     var chainedCheckType = checkType.bind(null, false);
     chainedCheckType.isRequired = checkType.bind(null, true);
+    chainedCheckType.isRequiredIf = function(requiredIfFn) {
+      return function(props, propName, componentName, location, propFullName, secret) {
+        return checkType(requiredIfFn(props), props, propName, componentName, location, propFullName, secret)
+      }
+    }
 
     return chainedCheckType;
   }
