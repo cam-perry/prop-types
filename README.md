@@ -122,6 +122,11 @@ MyComponent.propTypes = {
   // A value of any data type
   requiredAny: PropTypes.any.isRequired,
 
+  // You can specify a custom condition for whether a prop is required.
+  // Any truthy value returned from the custom condition function will 
+  // make the prop required.
+  conditionallyRequiredAny: PropTypes.any.isRequiredIf(props => !props.anotherProp)
+
   // You can also specify a custom validator. It should return an Error
   // object if the validation fails. Don't `console.warn` or throw, as this
   // won't work inside `oneOfType`.

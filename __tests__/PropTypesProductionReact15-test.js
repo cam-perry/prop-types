@@ -123,6 +123,39 @@ describe('PropTypesProductionReact15', () => {
       expectNoop(PropTypes.string.isRequired);
     });
 
+    it('should warn for missing conditionally required values', () => {
+      expectNoop(PropTypes.string.isRequiredIf(() => true), null);
+      expectNoop(PropTypes.string.isRequiredIf(() => 'truthy'), null);
+      expectNoop(PropTypes.string.isRequiredIf(() => 42), null);
+      expectNoop(PropTypes.string.isRequiredIf(() => ({})), null);
+      expectNoop(PropTypes.string.isRequiredIf(() => []), null);
+    });
+
+    it('should not warn for empty values with conditionally required prop type', () => {
+      expectNoop(PropTypes.string.isRequiredIf(() => false), null)
+      expectNoop(PropTypes.string.isRequiredIf(() => null), null)
+      expectNoop(PropTypes.string.isRequiredIf(() => undefined), null)
+      expectNoop(PropTypes.string.isRequiredIf(() => ''), null)
+      expectNoop(PropTypes.string.isRequiredIf(() => 0), null)
+    })
+
+    it('should call custom requiredIf function with props', () => {
+      spyOn(console, 'error')
+      const propTypes = {
+        foo: PropTypes.string.isRequiredIf(props => props.bar === 'baz'),
+        bar: PropTypes.string.isRequired
+      };
+      const props = { foo: null, bar: 'baz' };
+      PropTypes.checkPropTypes(
+        propTypes,
+        props,
+        'prop',
+        'testComponent',
+        null,
+      );
+      expect(console.error.calls.count()).toBe(0);
+    })
+
     it('should warn if called manually in development', () => {
       spyOn(console, 'error');
       expectNoop(PropTypes.array, /please/);

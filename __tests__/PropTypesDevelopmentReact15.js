@@ -249,6 +249,85 @@ describe('PropTypesDevelopmentReact15', () => {
 
     it('should warn for missing required values', () => {
       typeCheckFailRequiredValues(PropTypes.string.isRequired);
+      typeCheckFailRequiredValues(PropTypes.string.isRequiredIf(() => true));
+      typeCheckFailRequiredValues(PropTypes.string.isRequiredIf(() => 'any'));
+      typeCheckFailRequiredValues(PropTypes.string.isRequiredIf(() => 42));
+      typeCheckFailRequiredValues(PropTypes.string.isRequiredIf(() => ({})));
+      typeCheckFailRequiredValues(PropTypes.string.isRequiredIf(() => []));
+      typeCheckFailRequiredValues(PropTypes.string.isRequiredIf(() => Symbol()));
+      typeCheckFailRequiredValues(PropTypes.string.isRequiredIf(() => function() {}));
+    });
+
+    it('should not warn for empty values with falsy isRequiredIf return', () => {
+      typeCheckPass(PropTypes.string.isRequiredIf(() => undefined), null);
+      typeCheckPass(PropTypes.string.isRequiredIf(() => null), null);
+      typeCheckPass(PropTypes.string.isRequiredIf(() => false), null);
+      typeCheckPass(PropTypes.string.isRequiredIf(() => ''), null);
+      typeCheckPass(PropTypes.string.isRequiredIf(() => 0), null);
+      typeCheckPass(PropTypes.string.isRequiredIf(() => NaN), null);
+    })
+
+    it('should call isRequiredIf function with props', () => {
+      spyOn(console, 'error');
+      const propTypes = { 
+        foo: PropTypes.string.isRequiredIf(props => props.bar === 'baz'),
+        bar: PropTypes.string.isRequired
+      };
+      const props = { foo: null, bar: 'baz' };
+      PropTypes.checkPropTypes(
+        propTypes,
+        props,
+        'prop',
+        'testComponent',
+        null,
+      );
+      expect(console.error.calls.argsFor(0)[0]).toEqual(
+        "Warning: Failed prop type: The prop `foo` is marked as required in " +
+        "`testComponent`, but its value is `null`."
+      );
+    })
+
+    it('should warn for a missing function passsed to isRequiredIf', () => {
+      typeCheckFail(
+        PropTypes.string.isRequiredIf(),
+        'any',
+        'Warning: Failed prop type: Invalid use of isRequiredIf for prop `testProp` in `testComponent`. A `function` must be provided, but received `undefined`.',
+      );
+      typeCheckFail(
+        PropTypes.string.isRequiredIf(null),
+        'any',
+        'Warning: Failed prop type: Invalid use of isRequiredIf for prop `testProp` in `testComponent`. A `function` must be provided, but received `object`.',
+      );
+      typeCheckFail(
+        PropTypes.string.isRequiredIf(true),
+        'any',
+        'Warning: Failed prop type: Invalid use of isRequiredIf for prop `testProp` in `testComponent`. A `function` must be provided, but received `boolean`.',
+      );
+      typeCheckFail(
+        PropTypes.string.isRequiredIf(''),
+        'any',
+        'Warning: Failed prop type: Invalid use of isRequiredIf for prop `testProp` in `testComponent`. A `function` must be provided, but received `string`.',
+      );
+      typeCheckFail(
+        PropTypes.string.isRequiredIf(42),
+        'any',
+        'Warning: Failed prop type: Invalid use of isRequiredIf for prop `testProp` in `testComponent`. A `function` must be provided, but received `number`.',
+      );
+      typeCheckFail(
+        PropTypes.string.isRequiredIf({ foo: 'foo' }),
+        'any',
+        'Warning: Failed prop type: Invalid use of isRequiredIf for prop `testProp` in `testComponent`. A `function` must be provided, but received `object`.',
+      );
+      typeCheckFail(
+        PropTypes.string.isRequiredIf([]),
+        'any',
+        'Warning: Failed prop type: Invalid use of isRequiredIf for prop `testProp` in `testComponent`. A `function` must be provided, but received `object`.',
+      );
+      typeCheckFail(
+        PropTypes.string.isRequiredIf(Symbol()),
+        'any',
+        'Warning: Failed prop type: Invalid use of isRequiredIf for prop `testProp` in `testComponent`. A `function` must be provided, but received `symbol`.',
+      );
     });
 
     it('should warn if called manually in development', () => {
@@ -409,7 +488,41 @@ describe('PropTypesDevelopmentReact15', () => {
       typeCheckFailRequiredValues(
         PropTypes.arrayOf(PropTypes.number).isRequired,
       );
+      typeCheckFailRequiredValues(PropTypes.arrayOf(PropTypes.number).isRequiredIf(() => true));
     });
+
+    it('should not warn for empty values with falsy isRequiredIf return', () => {
+      typeCheckPass(PropTypes.arrayOf(PropTypes.number).isRequiredIf(() => false), null);
+    })
+
+    it('should call isRequiredIf function with props', () => {
+      spyOn(console, 'error');
+      const propTypes = {
+        foo: PropTypes.arrayOf(PropTypes.number).isRequiredIf(props => props.bar.length === 2),
+        bar: PropTypes.arrayOf(PropTypes.number).isRequired
+      };
+      const props = { foo: null, bar: [0, 1] };
+      PropTypes.checkPropTypes(
+        propTypes,
+        props,
+        'prop',
+        'testComponent',
+        null,
+      );
+      expect(console.error.calls.argsFor(0)[0]).toEqual(
+        "Warning: Failed prop type: The prop `foo` is marked as required in " +
+        "`testComponent`, but its value is `null`."
+      );
+    })
+
+    it('should warn for a missing function passsed to isRequiredIf', () => {
+      typeCheckFail(
+        PropTypes.arrayOf(PropTypes.number).isRequiredIf(),
+        [0],
+        'Warning: Failed prop type: Invalid use of isRequiredIf for prop `testProp` in `testComponent`. A `function` must be provided, but received `undefined`.',
+      );
+    });
+
 
     it('should warn if called manually in development', () => {
       spyOn(console, 'error');
@@ -476,6 +589,39 @@ describe('PropTypesDevelopmentReact15', () => {
 
     it('should warn for missing required values', () => {
       typeCheckFailRequiredValues(PropTypes.element.isRequired);
+      typeCheckFailRequiredValues(PropTypes.element.isRequiredIf(() => true));
+    });
+
+    it('should not warn for empty values with falsy isRequiredIf return', () => {
+      typeCheckPass(PropTypes.element.isRequiredIf(() => false), null);
+    })
+
+    it('should call isRequiredIf function with props', () => {
+      spyOn(console, 'error');
+      const propTypes = {
+        foo: PropTypes.element.isRequiredIf(props => !!props.bar),
+        bar: PropTypes.element.isRequired
+      };
+      const props = { foo: null, bar: <div /> };
+      PropTypes.checkPropTypes(
+        propTypes,
+        props,
+        'prop',
+        'testComponent',
+        null,
+      );
+      expect(console.error.calls.argsFor(0)[0]).toEqual(
+        "Warning: Failed prop type: The prop `foo` is marked as required in " +
+        "`testComponent`, but its value is `null`."
+      );
+    })
+
+    it('should warn for a missing function passsed to isRequiredIf', () => {
+      typeCheckFail(
+        PropTypes.element.isRequiredIf(),
+        <div />,
+        'Warning: Failed prop type: Invalid use of isRequiredIf for prop `testProp` in `testComponent`. A `function` must be provided, but received `undefined`.',
+      );
     });
 
     it('should warn if called manually in development', () => {
@@ -575,6 +721,39 @@ describe('PropTypesDevelopmentReact15', () => {
 
     it('should warn for missing required values', () => {
       typeCheckFailRequiredValues(PropTypes.instanceOf(String).isRequired);
+      typeCheckFailRequiredValues(PropTypes.instanceOf(String).isRequiredIf(() => true));
+    });
+
+    it('should not warn for empty values with falsy isRequiredIf return', () => {
+      typeCheckPass(PropTypes.instanceOf(String).isRequiredIf(() => false), null);
+    })
+
+    it('should call isRequiredIf function with props', () => {
+      spyOn(console, 'error');
+      const propTypes = {
+        foo: PropTypes.instanceOf(String).isRequiredIf(props => props.bar === 'baz'),
+        bar: PropTypes.instanceOf(String).isRequired
+      };
+      const props = { foo: null, bar: 'baz' };
+      PropTypes.checkPropTypes(
+        propTypes,
+        props,
+        'prop',
+        'testComponent',
+        null,
+      );
+      expect(console.error.calls.argsFor(0)[0]).toEqual(
+        "Warning: Failed prop type: The prop `foo` is marked as required in " +
+        "`testComponent`, but its value is `null`."
+      );
+    })
+
+    it('should warn for a missing function passsed to isRequiredIf', () => {
+      typeCheckFail(
+        PropTypes.instanceOf(String).isRequiredIf(),
+        'any',
+        'Warning: Failed prop type: Invalid use of isRequiredIf for prop `testProp` in `testComponent`. A `function` must be provided, but received `undefined`.',
+      );
     });
 
     it('should warn if called manually in development', () => {
@@ -671,6 +850,39 @@ describe('PropTypesDevelopmentReact15', () => {
 
     it('should warn for missing required values', () => {
       typeCheckFailRequiredValues(PropTypes.node.isRequired);
+      typeCheckFailRequiredValues(PropTypes.node.isRequiredIf(() => true));
+    });
+
+    it('should not warn for empty values with falsy isRequiredIf return', () => {
+      typeCheckPass(PropTypes.node.isRequiredIf(() => false), null);
+    })
+
+    it('should call isRequiredIf function with props', () => {
+      spyOn(console, 'error');
+      const propTypes = {
+        foo: PropTypes.node.isRequiredIf(props => !!props.bar),
+        bar: PropTypes.node.isRequired
+      };
+      const props = { foo: null, bar: function() {} };
+      PropTypes.checkPropTypes(
+        propTypes,
+        props,
+        'prop',
+        'testComponent',
+        null,
+      );
+      expect(console.error.calls.argsFor(0)[0]).toEqual(
+        "Warning: Failed prop type: The prop `foo` is marked as required in " +
+        "`testComponent`, but its value is `null`."
+      );
+    })
+
+    it('should warn for a missing function passsed to isRequiredIf', () => {
+      typeCheckFail(
+        PropTypes.node.isRequiredIf(),
+        function() {},
+        'Warning: Failed prop type: Invalid use of isRequiredIf for prop `testProp` in `testComponent`. A `function` must be provided, but received `undefined`.',
+      );
     });
 
     it('should accept empty array for required props', () => {
@@ -790,6 +1002,44 @@ describe('PropTypesDevelopmentReact15', () => {
       typeCheckFailRequiredValues(
         PropTypes.objectOf(PropTypes.number).isRequired,
       );
+      typeCheckFailRequiredValues(
+        PropTypes.objectOf(PropTypes.number).isRequiredIf(() => true)
+      );
+    });
+
+    it('should not warn for empty values with falsy isRequiredIf return', () => {
+      typeCheckPass(
+        PropTypes.objectOf(PropTypes.number).isRequiredIf(() => false), 
+        null
+      );
+    })
+
+    it('should call isRequiredIf function with props', () => {
+      spyOn(console, 'error');
+      const propTypes = {
+        foo: PropTypes.objectOf(PropTypes.number).isRequiredIf(props => props.bar.baz === 1),
+        bar: PropTypes.objectOf(PropTypes.number).isRequired
+      };
+      const props = { foo: null, bar: { baz: 1 } };
+      PropTypes.checkPropTypes(
+        propTypes,
+        props,
+        'prop',
+        'testComponent',
+        null,
+      );
+      expect(console.error.calls.argsFor(0)[0]).toEqual(
+        "Warning: Failed prop type: The prop `foo` is marked as required in " +
+        "`testComponent`, but its value is `null`."
+      );
+    })
+
+    it('should warn for a missing function passsed to isRequiredIf', () => {
+      typeCheckFail(
+        PropTypes.objectOf(PropTypes.number).isRequiredIf(),
+        { foo: 1 },
+        'Warning: Failed prop type: Invalid use of isRequiredIf for prop `testProp` in `testComponent`. A `function` must be provided, but received `undefined`.',
+      );
     });
 
     it('should warn if called manually in development', () => {
@@ -865,8 +1115,41 @@ describe('PropTypesDevelopmentReact15', () => {
 
     it('should warn for missing required values', () => {
       typeCheckFailRequiredValues(PropTypes.oneOf(['red', 'blue']).isRequired);
+      typeCheckFailRequiredValues(PropTypes.oneOf(['red', 'blue']).isRequiredIf(() => true));
     });
 
+    it('should not warn for empty values with falsy isRequiredIf return', () => {
+      typeCheckPass(PropTypes.oneOf(['red', 'blue']).isRequiredIf(() => false), null);
+    })
+
+    it('should call isRequiredIf function with props', () => {
+      spyOn(console, 'error');
+      const propTypes = {
+        foo: PropTypes.PropTypes.oneOf(['red', 'blue']).isRequiredIf(props => props.bar === 'red'),
+        bar: PropTypes.PropTypes.oneOf(['red', 'blue']).isRequired
+      };
+      const props = { foo: null, bar: 'red' };
+      PropTypes.checkPropTypes(
+        propTypes,
+        props,
+        'prop',
+        'testComponent',
+        null,
+      );
+      expect(console.error.calls.argsFor(0)[0]).toEqual(
+        "Warning: Failed prop type: The prop `foo` is marked as required in " +
+        "`testComponent`, but its value is `null`."
+      );
+    })
+
+    it('should warn for a missing function passsed to isRequiredIf', () => {
+      typeCheckFail(
+        PropTypes.oneOf(['red', 'blue']).isRequiredIf(),
+        'red',
+        'Warning: Failed prop type: Invalid use of isRequiredIf for prop `testProp` in `testComponent`. A `function` must be provided, but received `undefined`.',
+      );
+    });
+    
     it('should warn if called manually in development', () => {
       spyOn(console, 'error');
       expectWarningInDevelopment(PropTypes.oneOf(['red', 'blue']), true);
@@ -955,6 +1238,45 @@ describe('PropTypesDevelopmentReact15', () => {
     it('should warn for missing required values', () => {
       typeCheckFailRequiredValues(
         PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      );
+      typeCheckFailRequiredValues(
+        PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequiredIf(() => true)
+      );
+    });
+
+    it('should not warn for empty values with falsy isRequiredIf return', () => {
+      typeCheckPass(
+        PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequiredIf(() => false), 
+        null
+      );
+    })
+
+    it('should call isRequiredIf function with props', () => {
+      spyOn(console, 'error');
+      const propTypes = {
+        foo: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).
+          isRequiredIf(props => props.bar === 'baz'),
+        bar: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
+      };
+      const props = { foo: null, bar: 'baz' };
+      PropTypes.checkPropTypes(
+        propTypes,
+        props,
+        'prop',
+        'testComponent',
+        null,
+      );
+      expect(console.error.calls.argsFor(0)[0]).toEqual(
+        "Warning: Failed prop type: The prop `foo` is marked as required in " +
+        "`testComponent`, but its value is `null`."
+      );
+    })
+
+    it('should warn for a missing function passsed to isRequiredIf', () => {
+      typeCheckFail(
+        PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequiredIf(),
+        'foo',
+        'Warning: Failed prop type: Invalid use of isRequiredIf for prop `testProp` in `testComponent`. A `function` must be provided, but received `undefined`.',
       );
     });
 
@@ -1053,6 +1375,44 @@ describe('PropTypesDevelopmentReact15', () => {
     it('should warn for missing required values', () => {
       typeCheckFailRequiredValues(
         PropTypes.shape({key: PropTypes.number}).isRequired,
+      );
+      typeCheckFailRequiredValues(
+        PropTypes.shape({ key: PropTypes.number }).isRequiredIf(() => true)
+      );
+    });
+
+    it('should not warn for empty values with falsy isRequiredIf return', () => {
+      typeCheckPass(
+        PropTypes.shape({ key: PropTypes.number }).isRequiredIf(() => false),
+        null
+      );
+    })
+
+    it('should call isRequiredIf function with props', () => {
+      spyOn(console, 'error');
+      const propTypes = {
+        foo: PropTypes.shape({ key: PropTypes.number }).isRequiredIf(props => props.bar.key === 1),
+        bar: PropTypes.shape({ key: PropTypes.number }).isRequired
+      };
+      const props = { foo: null, bar: { key: 1 } };
+      PropTypes.checkPropTypes(
+        propTypes,
+        props,
+        'prop',
+        'testComponent',
+        null,
+      );
+      expect(console.error.calls.argsFor(0)[0]).toEqual(
+        "Warning: Failed prop type: The prop `foo` is marked as required in " +
+        "`testComponent`, but its value is `null`."
+      );
+    })
+
+    it('should warn for a missing function passsed to isRequiredIf', () => {
+      typeCheckFail(
+        PropTypes.shape({ key: PropTypes.number }).isRequiredIf(),
+        { key: 1 },
+        'Warning: Failed prop type: Invalid use of isRequiredIf for prop `testProp` in `testComponent`. A `function` must be provided, but received `undefined`.',
       );
     });
 
@@ -1160,6 +1520,44 @@ describe('PropTypesDevelopmentReact15', () => {
     it('should warn for missing required values', () => {
       typeCheckFailRequiredValues(
         PropTypes.exact({key: PropTypes.number}).isRequired,
+      );
+      typeCheckFailRequiredValues(
+        PropTypes.exact({ key: PropTypes.number }).isRequiredIf(() => true)
+      );
+    });
+
+    it('should not warn for empty values with falsy isRequiredIf return', () => {
+      typeCheckPass(
+        PropTypes.exact({ key: PropTypes.number }).isRequiredIf(() => false),
+        null
+      );
+    })
+
+    it('should call isRequiredIf function with props', () => {
+      spyOn(console, 'error');
+      const propTypes = {
+        foo: PropTypes.exact({ key: PropTypes.number }).isRequiredIf(props => props.bar.key === 1),
+        bar: PropTypes.exact({ key: PropTypes.number }).isRequired
+      };
+      const props = { foo: null, bar: { key: 1 } };
+      PropTypes.checkPropTypes(
+        propTypes,
+        props,
+        'prop',
+        'testComponent',
+        null,
+      );
+      expect(console.error.calls.argsFor(0)[0]).toEqual(
+        "Warning: Failed prop type: The prop `foo` is marked as required in " +
+        "`testComponent`, but its value is `null`."
+      );
+    })
+
+    it('should warn for a missing function passsed to isRequiredIf', () => {
+      typeCheckFail(
+        PropTypes.exact({ key: PropTypes.number }).isRequiredIf(),
+        { key: 1 },
+        'Warning: Failed prop type: Invalid use of isRequiredIf for prop `testProp` in `testComponent`. A `function` must be provided, but received `undefined`.',
       );
     });
 

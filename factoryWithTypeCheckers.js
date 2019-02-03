@@ -218,8 +218,24 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 
     var chainedCheckType = checkType.bind(null, false);
     chainedCheckType.isRequired = checkType.bind(null, true);
+    chainedCheckType.isRequiredIf = function(requiredIfFn) {
+      return createConditionalRequiredIf(requiredIfFn, checkType);
+    }
 
     return chainedCheckType;
+  }
+
+  function createConditionalRequiredIf(requiredIfFn, checkType) {
+    return function (props, propName, componentName, location, propFullName, secret) {
+      componentName = componentName || ANONYMOUS;
+      propFullName = propFullName || propName;
+      if (typeof requiredIfFn !== "function") {
+        return new Error(
+          'Invalid use of isRequiredIf for ' + location + ' `' + propFullName + '` in `' + componentName + '`. A `function` must be provided, but received `' + typeof requiredIfFn + '`.'
+        );
+      }
+      return checkType(requiredIfFn(props), props, propName, componentName, location, propFullName, secret);
+    }
   }
 
   function createPrimitiveTypeChecker(expectedType) {
