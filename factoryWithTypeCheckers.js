@@ -7,6 +7,7 @@
 
 'use strict';
 
+var mobx = require('mobx');
 var assign = require('object-assign');
 
 var ReactPropTypesSecret = require('./lib/ReactPropTypesSecret');
@@ -124,6 +125,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
     arrayOf: createArrayOfTypeChecker,
     element: createElementTypeChecker(),
     instanceOf: createInstanceTypeChecker,
+    modelOf: createModelTypeChecker,
     node: createNodeChecker(),
     objectOf: createObjectOfTypeChecker,
     oneOf: createEnumTypeChecker,
@@ -292,8 +294,28 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
     return createChainableTypeChecker(validate);
   }
 
-  function createInstanceTypeChecker(expectedClass) {
+  function createModelTypeChecker(expectedModel) {
     function validate(props, propName, componentName, location, propFullName) {
+      console.log({
+        props,
+        propName,
+        componentName,
+        location,
+        propFullName,
+        expectedModel
+      })
+      var expectedClassName = expectedModel.name || ANONYMOUS;
+      var actualClassName = getClassName(props[propName]);
+      if (mobx.isStateTreeNode(props[propName]) && expectedModel.is(props[propName])) {
+        return null;
+      }
+      return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + actualClassName + '` supplied to `' + componentName + '`, expected ') + ('instance of `' + expectedClassName + '`.'));
+    }
+    return createChainableTypeChecker(validate);
+  }
+
+  function createInstanceTypeChecker(expectedClass) {
+    function validate(props, propName, componentName, location, propFullName) {      
       if (!(props[propName] instanceof expectedClass)) {
         var expectedClassName = expectedClass.name || ANONYMOUS;
         var actualClassName = getClassName(props[propName]);
